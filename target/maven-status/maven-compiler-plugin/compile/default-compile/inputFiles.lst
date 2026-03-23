@@ -2,6 +2,7 @@ D:\javafullstack\Mini_Project_Hostel_Management\hostel-management\src\main\java\
 D:\javafullstack\Mini_Project_Hostel_Management\hostel-management\src\main\java\com\hostel\management\model\FoodMenu.java
 D:\javafullstack\Mini_Project_Hostel_Management\hostel-management\src\main\java\com\hostel\management\repository\PaymentRepository.java
 D:\javafullstack\Mini_Project_Hostel_Management\hostel-management\src\main\java\com\hostel\management\repository\WardenRepository.java
+D:\javafullstack\Mini_Project_Hostel_Management\hostel-management\src\main\java\com\hostel\management\config\CorsConfig.java
 D:\javafullstack\Mini_Project_Hostel_Management\hostel-management\src\main\java\com\hostel\management\dto\request\AttendanceRequest.java
 D:\javafullstack\Mini_Project_Hostel_Management\hostel-management\src\main\java\com\hostel\management\model\Student.java
 D:\javafullstack\Mini_Project_Hostel_Management\hostel-management\src\main\java\com\hostel\management\repository\RoomRepository.java
