@@ -64,12 +64,16 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(allowedOrigins.split(",")));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+
+        configuration.setAllowedOrigins(List.of("https://hostel-management-frontend-g5b4.onrender.com"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
+
         return source;
     }
 
@@ -81,12 +85,13 @@ public class SecurityConfig {
             .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/warden/**").hasAnyRole("ADMIN", "WARDEN")
-                .requestMatchers("/student/**").hasAnyRole("ADMIN", "WARDEN", "STUDENT")
-                .anyRequest().authenticated()
-            );
+            	    .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // ✅ FIX 1
+            	    .requestMatchers("/api/auth/**").permitAll()
+            	    .requestMatchers("/admin/**").hasRole("ADMIN")
+            	    .requestMatchers("/warden/**").hasAnyRole("ADMIN", "WARDEN")
+            	    .requestMatchers("/student/**").hasAnyRole("ADMIN", "WARDEN", "STUDENT")
+            	    .anyRequest().authenticated()
+            	);
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
