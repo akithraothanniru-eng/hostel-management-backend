@@ -1,30 +1,29 @@
 package com.hostel.management.config;
 
 import com.hostel.management.security.JwtAuthEntryPoint;
-import org.springframework.http.HttpMethod;
 import com.hostel.management.security.JwtAuthenticationFilter;
 import com.hostel.management.security.UserDetailsServiceImpl;
-import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
-import org.springframework.core.Ordered;
-import org.springframework.web.filter.CorsFilter;
+
 import java.util.List;
 
 @Configuration
@@ -36,9 +35,6 @@ public class SecurityConfig {
     private final JwtAuthEntryPoint unauthorizedHandler;
     private final JwtAuthenticationFilter jwtAuthFilter;
 
-    @Value("${app.cors.allowed-origins}")
-    private String allowedOrigins;
-
     public SecurityConfig(UserDetailsServiceImpl userDetailsService,
                           JwtAuthEntryPoint unauthorizedHandler,
                           JwtAuthenticationFilter jwtAuthFilter) {
@@ -47,11 +43,13 @@ public class SecurityConfig {
         this.jwtAuthFilter = jwtAuthFilter;
     }
 
+    // 🔐 Password encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // 🔐 Authentication provider
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -60,33 +58,27 @@ public class SecurityConfig {
         return provider;
     }
 
+    // 🔐 Authentication manager
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    // Register CorsFilter at HIGHEST_PRECEDENCE so it runs before Spring Security.
-    // This guarantees Access-Control-Allow-Origin is on ALL responses, including 401s.
-    @Bean
-    public FilterRegistrationBean<CorsFilter> corsFilterRegistration() {
-        FilterRegistrationBean<CorsFilter> bean =
-                new FilterRegistrationBean<>(new CorsFilter(corsConfigurationSource()));
-        bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
-        return bean;
-    }
-
+    // 🌐 CORS Configuration (FIXED)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allow all origins — lock this down to your frontend URL in production
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        // ✅ IMPORTANT: Use exact frontend URL (NO "*")
+        configuration.setAllowedOrigins(List.of(
+            "https://hostel-management-frontend-g5b4.onrender.com"
+        ));
 
         configuration.setAllowedMethods(List.of(
             "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
         ));
 
-        configuration.addAllowedHeader("*");
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
 
@@ -96,23 +88,41 @@ public class SecurityConfig {
         return source;
     }
 
+    // 🔒 Security filter chain
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ✅ keep this at top
+            // ✅ Enable CORS
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+            // ❌ Disable CSRF (for APIs)
             .csrf(AbstractHttpConfigurer::disable)
-            .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedHandler))
+
+            // ❌ Stateless session (JWT)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+            // 🚫 Handle unauthorized access
+            .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedHandler))
+
+            // 🔐 Authorization rules
             .authorizeHttpRequests(auth -> auth
-            		.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/auth/**").permitAll()
+                // ✅ VERY IMPORTANT (fix preflight)
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                // ✅ FIXED: correct auth path
+                .requestMatchers("/api/auth/**").permitAll()
+
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/warden/**").hasAnyRole("ADMIN", "WARDEN")
                 .requestMatchers("/student/**").hasAnyRole("ADMIN", "WARDEN", "STUDENT")
+
                 .anyRequest().authenticated()
             );
 
+        // 🔐 Set authentication provider
         http.authenticationProvider(authenticationProvider());
+
+        // 🔐 Add JWT filter
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
