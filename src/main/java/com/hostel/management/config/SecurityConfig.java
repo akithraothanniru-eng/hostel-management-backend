@@ -65,9 +65,15 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("https://hostel-management-frontend-g5b4.onrender.com"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        configuration.setAllowedOrigins(List.of(
+            "https://hostel-management-frontend-g5b4.onrender.com"
+        ));
+
+        configuration.setAllowedMethods(List.of(
+            "GET", "POST", "PUT", "DELETE", "OPTIONS"
+        ));
+
+        configuration.setAllowedHeaders(List.of("*")); // 🔥 IMPORTANT FIX
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
 
@@ -80,20 +86,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ✅ keep this at top
             .csrf(AbstractHttpConfigurer::disable)
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-            	    .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // ✅ FIX 1
-            	    .requestMatchers("/api/auth/**").permitAll()
-            	    .requestMatchers("/admin/**").hasRole("ADMIN")
-            	    .requestMatchers("/warden/**").hasAnyRole("ADMIN", "WARDEN")
-            	    .requestMatchers("/student/**").hasAnyRole("ADMIN", "WARDEN", "STUDENT")
-            	    .anyRequest().authenticated()
-            	);
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // ✅ VERY IMPORTANT
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/warden/**").hasAnyRole("ADMIN", "WARDEN")
+                .requestMatchers("/student/**").hasAnyRole("ADMIN", "WARDEN", "STUDENT")
+                .anyRequest().authenticated()
+            );
+
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
-}
