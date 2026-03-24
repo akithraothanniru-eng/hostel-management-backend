@@ -1,6 +1,7 @@
 package com.hostel.management.config;
 
 import com.hostel.management.security.JwtAuthEntryPoint;
+import org.springframework.http.HttpMethod;
 import com.hostel.management.security.JwtAuthenticationFilter;
 import com.hostel.management.security.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Value;
@@ -73,7 +74,7 @@ public class SecurityConfig {
             "GET", "POST", "PUT", "DELETE", "OPTIONS"
         ));
 
-        configuration.setAllowedHeaders(List.of("*")); // 🔥 IMPORTANT FIX
+        configuration.addAllowedHeader("*");
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
 
@@ -91,7 +92,7 @@ public class SecurityConfig {
             .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // ✅ VERY IMPORTANT
+            		.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/warden/**").hasAnyRole("ADMIN", "WARDEN")
@@ -104,3 +105,4 @@ public class SecurityConfig {
 
         return http.build();
     }
+}
