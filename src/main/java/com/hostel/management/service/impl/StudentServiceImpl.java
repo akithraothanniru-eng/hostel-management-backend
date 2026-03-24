@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 public class StudentServiceImpl implements StudentService {
 
     private final StudentRepository studentRepository;
@@ -131,7 +132,9 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public List<StudentResponse> getAllStudents() {
-        return studentRepository.findAll().stream().map(this::toResponse).collect(Collectors.toList());
+        return studentRepository.findAll().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -157,9 +160,11 @@ public class StudentServiceImpl implements StudentService {
     public StudentResponse toResponse(Student s) {
         StudentResponse r = new StudentResponse();
         r.setStudentId(s.getStudentId());
-        r.setUserId(s.getUser().getUserId());
-        r.setUsername(s.getUser().getUsername());
-        r.setEmail(s.getUser().getEmail());
+        if (s.getUser() != null) {
+            r.setUserId(s.getUser().getUserId());
+            r.setUsername(s.getUser().getUsername());
+            r.setEmail(s.getUser().getEmail());
+        }
         r.setName(s.getName());
         r.setPhone(s.getPhone());
         r.setCourse(s.getCourse());

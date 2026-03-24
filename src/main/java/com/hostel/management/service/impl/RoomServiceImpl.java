@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 public class RoomServiceImpl implements RoomService {
 
     private final RoomRepository roomRepository;
@@ -92,12 +93,16 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     public List<RoomResponse> getAllRooms() {
-        return roomRepository.findAll().stream().map(this::toResponse).collect(Collectors.toList());
+        return roomRepository.findAll().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<RoomResponse> getAvailableRooms() {
-        return roomRepository.findAvailableRooms().stream().map(this::toResponse).collect(Collectors.toList());
+        return roomRepository.findAvailableRooms().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     private RoomResponse toResponse(Room r) {
@@ -106,9 +111,15 @@ public class RoomServiceImpl implements RoomService {
         resp.setRoomNumber(r.getRoomNumber());
         resp.setCapacity(r.getCapacity());
         resp.setOccupancy(studentRepository.findByRoomRoomId(r.getRoomId()).size());
+
+        // Safely access lazy warden — guarded null check
         if (r.getWarden() != null) {
-            resp.setWardenId(r.getWarden().getWardenId());
-            resp.setWardenUsername(r.getWarden().getUser().getUsername());
+            Warden w = r.getWarden();
+            resp.setWardenId(w.getWardenId());
+            // User is EAGER on Warden so this is safe inside a transaction
+            if (w.getUser() != null) {
+                resp.setWardenUsername(w.getUser().getUsername());
+            }
         }
         return resp;
     }
