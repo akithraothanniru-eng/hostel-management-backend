@@ -11,6 +11,7 @@ D:\javafullstack\Mini_Project_Hostel_Management\hostel-management\src\main\java\
 D:\javafullstack\Mini_Project_Hostel_Management\hostel-management\src\main\java\com\hostel\management\service\FoodMenuService.java
 D:\javafullstack\Mini_Project_Hostel_Management\hostel-management\src\main\java\com\hostel\management\service\impl\WardenServiceImpl.java
 D:\javafullstack\Mini_Project_Hostel_Management\hostel-management\src\main\java\com\hostel\management\service\PaymentService.java
+D:\javafullstack\Mini_Project_Hostel_Management\hostel-management\src\main\java\com\hostel\management\config\DataInitializer.java
 D:\javafullstack\Mini_Project_Hostel_Management\hostel-management\src\main\java\com\hostel\management\controller\AuthController.java
 D:\javafullstack\Mini_Project_Hostel_Management\hostel-management\src\main\java\com\hostel\management\service\impl\FoodMenuServiceImpl.java
 D:\javafullstack\Mini_Project_Hostel_Management\hostel-management\src\main\java\com\hostel\management\model\Payment.java
