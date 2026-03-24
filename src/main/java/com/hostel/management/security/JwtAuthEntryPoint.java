@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +24,8 @@ public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
                          AuthenticationException authException) throws IOException {
         logger.error("Unauthorized: {}", authException.getMessage());
 
-        // Always add CORS headers so the browser can read the error response
+        // Add CORS headers manually here as a safety net —
+        // Spring Security can call this before the CorsFilter on some error paths
         String origin = request.getHeader("Origin");
         if (origin != null) {
             response.setHeader("Access-Control-Allow-Origin", origin);
@@ -32,7 +34,7 @@ public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
             response.setHeader("Access-Control-Allow-Headers", "*");
         }
 
-        // Short-circuit OPTIONS preflight — no body needed
+        // OPTIONS preflight — just return 200, no body needed
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             response.setStatus(HttpServletResponse.SC_OK);
             return;
@@ -40,11 +42,13 @@ public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+
         Map<String, Object> body = new HashMap<>();
         body.put("status",  HttpServletResponse.SC_UNAUTHORIZED);
         body.put("error",   "Unauthorized");
         body.put("message", authException.getMessage());
         body.put("path",    request.getServletPath());
+
         new ObjectMapper().writeValue(response.getOutputStream(), body);
     }
 }
